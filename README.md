@@ -1,7 +1,7 @@
 # Cartesian Space Control and Inverse Kinematics of a 7-DOF Manipulator
 
 ## Project Overview
-This repository provides an advanced MATLAB-based framework for the closed-loop kinematic control of a 7-DOF robotic manipulator operating in Cartesian space. The system calculates the exact joint velocities required to drive a custom Tool Center Point (TCP) to a predefined goal pose (position and orientation) using the Moore-Penrose pseudoinverse of the analytically derived Tool Jacobian matrix.
+This repository provides an advanced MATLAB-based framework for the closed-loop kinematic control of a 7-DOF robotic manipulator operating in Cartesian space. The system calculates the exact joint velocities required to drive a custom Tool Center Point (TCP) to a predefined goal pose using the Moore-Penrose pseudoinverse of the analytically derived Tool Jacobian matrix.
 
 ## Mathematical Formulation
 
@@ -13,19 +13,19 @@ $$^0T_t(q) = {^0T_f(q)} \cdot {^fT_t}$$
 ### 2. Differential Kinematics and Jacobian Shifting
 To control the Tool frame rather than the flange, the Flange Jacobian $J_f(q)$ must be mathematically shifted. Let $r = [r_x, r_y, r_z]^T$ be the offset vector from the flange to the tool origin, expressed in the base frame. The Rigid Body Jacobian (Shift Matrix) is utilized to compute the Tool Jacobian $J_t(q)$:
 
-$$J_t(q) = \begin{bmatrix} I_{3 \times 3} & 0_{3 \times 3} \\ -[r]_{\times} & I_{3 \times 3} \end{bmatrix} J_f(q)$$
+$$ J_t(q) = \begin{bmatrix} I_{3 \times 3} & 0_{3 \times 3} \\  -[r]_{\times} & I_{3 \times 3} \end{bmatrix} J_f(q) $$
 
-Where $[r]_{\times}$ is the skew-symmetric matrix of the offset vector $r$.
+Where $[r]_{\times}$ is the skew-symmetric matrix of the offset vector $r$. This transformation properly maps the operational space twist from the flange to the tool.
 
 ### 3. Cartesian Error Computation
-The control objective is to drive the Cartesian error to zero.
+The control objective is to drive the Cartesian pose error to zero.
 
 **Linear Error ($e_p$):**
 
 $$e_p = P_{goal} - P_{tool}$$
 
 **Rotational Error ($e_o$):**
-The relative rotation from the current tool frame to the goal frame is calculated as $R_{err} = R_{tool}^T R_{goal}$. This matrix is converted into an equivalent Angle-Axis representation $(h, \theta)$ to avoid representation singularities, where:
+The relative rotation from the current tool frame to the goal frame is calculated as $R_{err} = R_{tool}^T R_{goal}$. This matrix is converted into an equivalent Angle-Axis representation $(h, \theta)$ to avoid representation singularities:
 
 $$\theta = \cos^{-1}\left(\frac{\text{tr}(R_{err}) - 1}{2}\right)$$
 
@@ -33,17 +33,24 @@ The rotational error vector, projected back into the base frame, is:
 
 $$e_o = R_{tool} (h \theta)$$
 
-### 4. Proportional Control Law
-A proportional control law generates the desired operational space twist $\dot{x}_{des}$ (combining angular and linear velocities) to minimize the computed errors:
+### 4. Generalized Kinematic Control Law
+To track a desired Cartesian trajectory, the generalized closed-loop kinematic control law combines a feed-forward velocity term (to track moving targets) with a proportional feedback term (to correct drift and initial offsets):
 
-$$\dot{x}_{des} = \begin{bmatrix} K_a e_o \\ K_l e_p \end{bmatrix}$$
+$$\dot{x}_{ref} = \dot{x}_{des} + K \cdot e$$
 
-Where $K_a$ and $K_l$ are positive scalar gains for angular and linear convergence, respectively.
+Where:
+- $\dot{x}_{des} \in \mathbb{R}^6$ is the **Feed-forward term** (desired velocity of the goal). 
+- $e = [e_o^T, e_p^T]^T$ is the combined Cartesian error vector.
+- $K = \text{diag}(K_a, K_l)$ is the positive definite gain matrix.
 
-### 5. Inverse Kinematics and Integration
+*Note on Implementation:* In this specific simulation, since the control objective is a fixed posture regulation problem (static goal), the feed-forward term is zero ($\dot{x}_{des} = 0$). Thus, the control law simplifies to pure proportional feedback:
+
+$$\dot{x}_{ref} = \begin{bmatrix} K_a e_o \\ K_l e_p \end{bmatrix}$$
+
+### 5. Inverse Kinematics via Pseudoinverse
 The required joint space velocities $\dot{q}$ are resolved using the Moore-Penrose pseudoinverse of the Tool Jacobian ($J_t^{\dagger}$) to natively handle kinematic redundancy (7-DOF):
 
-$$\dot{q} = J_t^{\dagger} \dot{x}_{des}$$
+$$\dot{q} = J_t^{\dagger} \dot{x}_{ref}$$
 
 The joint positions are updated numerically via Euler integration, enforcing strict hardware joint limits $[q_{min}, q_{max}]$:
 
