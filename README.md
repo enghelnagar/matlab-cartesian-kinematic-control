@@ -13,8 +13,9 @@ $$^0T_t(q) = {^0T_f(q)} \cdot {^fT_t}$$
 ### 2. Differential Kinematics and Jacobian Shifting
 To control the Tool frame rather than the flange, the Flange Jacobian $J_f(q)$ must be mathematically shifted. Let $r = [r_x, r_y, r_z]^T$ be the offset vector from the flange to the tool origin, expressed in the base frame. The Rigid Body Jacobian (Shift Matrix) is utilized to compute the Tool Jacobian $J_t(q)$:
 
-$$ J_t(q) = \begin{bmatrix} I_{3 \times 3} & 0_{3 \times 3} 
-\\  -[r]_{\times} & I_{3 \times 3} \end{bmatrix} J_f(q) $$
+$$
+J_t(q) = \begin{bmatrix} I_{3 \times 3} & 0_{3 \times 3} \\ -[r]_{\times} & I_{3 \times 3} \end{bmatrix} J_f(q)
+$$
 
 Where $[r]_{\times}$ is the skew-symmetric matrix of the offset vector $r$. This transformation properly maps the operational space twist from the flange to the tool.
 
