@@ -46,7 +46,7 @@ Where:
 
 *Note on Implementation:* In this specific simulation, since the control objective is a fixed posture regulation problem (static goal), the feed-forward term is zero ($\dot{x}_{des} = 0$). Thus, the control law simplifies to pure proportional feedback:
 
-$$\dot{x}_{ref} = \begin{bmatrix} K_a e_o \\ K_l e_p \end{bmatrix}$$
+$$\dot{x}_{ref} = \begin{bmatrix} K_a e_o \\\\ K_l e_p \end{bmatrix}$$
 
 ### 5. Inverse Kinematics via Pseudoinverse
 The required joint space velocities $\dot{q}$ are resolved using the Moore-Penrose pseudoinverse of the Tool Jacobian ($J_t^{\dagger}$) to natively handle kinematic redundancy (7-DOF):
